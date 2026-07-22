@@ -1,18 +1,24 @@
-import { PolarAngleAxis, PolarGrid, Radar, RadarChart, ResponsiveContainer, Line, LineChart, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
+import { ResponsiveContainer, Line, LineChart, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { AXES } from '../config/gameConfig'
 import type { GameState, Scores } from '../domain/schemas'
 import { dailyTrend } from '../domain/scoring'
 
-export function ScoreRadar({ baseline, current }: { baseline?: Scores | null; current: Scores }) {
-  const data = AXES.map((axis) => ({ axis: axis.label, baseline: baseline?.[axis.id], current: current[axis.id] }))
+export function AxisScales({ baseline, current }: { baseline?: Scores | null; current: Scores }) {
   return <div className="card">
-    <div aria-hidden="true" className="h-72 w-full">
-      <ResponsiveContainer width="100%" height="100%"><RadarChart data={data} outerRadius="70%"><PolarGrid stroke="#0b102033" /><PolarAngleAxis dataKey="axis" tick={{ fill: '#0b1020', fontSize: 12 }} />
-        {baseline && <Radar name="Baseline" dataKey="baseline" stroke="#87bdf5" fill="#87bdf5" fillOpacity={0.24} />}
-        <Radar name="Current" dataKey="current" stroke="#ff7657" fill="#ff7657" fillOpacity={0.32} />
-      </RadarChart></ResponsiveContainer>
-    </div>
-    <table className="w-full text-sm"><caption className="mb-2 text-left font-semibold">Score chart values</caption><thead><tr className="border-b border-ink/10 text-left text-ink/55"><th className="py-2">Axis</th>{baseline && <th>Baseline</th>}<th>Current</th></tr></thead><tbody>{data.map((row) => <tr className="border-b border-ink/5" key={row.axis}><th className="py-2 text-left">{row.axis}</th>{baseline && <td>{row.baseline}</td>}<td>{row.current}</td></tr>)}</tbody></table>
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><p className="eyebrow">Value orientation</p><h2 className="mt-1 font-display text-2xl font-bold">Four tensions, not grades</h2></div>{baseline && <div className="flex gap-4 text-xs font-semibold text-ink/55"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border-2 border-sky bg-white" />Baseline</span><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-coral" />Current</span></div>}</div>
+    <div className="space-y-7">{AXES.map((axis) => {
+      const value = current[axis.id]
+      const baselineValue = baseline?.[axis.id]
+      return <section key={axis.id} aria-label={`${axis.label}: ${value} out of 100`}>
+        <div className="mb-2 flex items-end justify-between gap-4"><div><p className="font-bold">{axis.leftLabel}</p><p className="text-xs text-ink/45">0</p></div><div className="rounded-full bg-ink/5 px-3 py-1 text-sm font-bold">{value}</div><div className="text-right"><p className="font-bold">{axis.rightLabel}</p><p className="text-xs text-ink/45">100</p></div></div>
+        <div className="relative h-3 rounded-full bg-gradient-to-r from-sky/55 via-ink/10 to-coral/55">
+          <span aria-hidden="true" className="absolute left-1/2 top-[-3px] h-[18px] w-px bg-ink/35" />
+          {baselineValue !== undefined && <span aria-hidden="true" className="absolute top-1/2 z-10 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] border-sky bg-white" style={{ left: `${baselineValue}%` }} />}
+          <span aria-hidden="true" className="absolute top-1/2 z-20 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-coral shadow" style={{ left: `${value}%` }} />
+        </div>
+        <p className="mt-1 text-center text-[11px] font-semibold text-ink/40">50 · mixed or context-dependent</p>
+      </section>
+    })}</div>
   </div>
 }
 
@@ -27,9 +33,10 @@ export function TrendChart({ state }: { state: GameState }) {
   </div>
 }
 
-export function ResultCards({ scores, rationales, previous, limited }: { scores: Scores; rationales: Record<string, string>; previous?: Scores | null; limited?: Record<string, boolean> }) {
+export function ResultCards({ scores, rationales, previous }: { scores: Scores; rationales: Record<string, string>; previous?: Scores | null }) {
   return <div className="grid gap-3 sm:grid-cols-2">{AXES.map((axis) => {
     const delta = previous ? scores[axis.id] - previous[axis.id] : null
-    return <article className="card" key={axis.id}><div className="flex items-start justify-between gap-4"><div><p className="eyebrow">{axis.label}</p><p className="mt-1 font-display text-4xl font-bold">{scores[axis.id]}</p></div>{delta !== null && <span className={`rounded-full px-3 py-1 text-sm font-bold ${delta > 0 ? 'bg-mint/30' : delta < 0 ? 'bg-coral/25' : 'bg-ink/5'}`}>{delta > 0 ? '+' : ''}{delta}</span>}</div><p className="mt-3 text-sm leading-relaxed text-ink/65">{rationales[axis.id]}</p>{limited?.[axis.id] && <p className="mt-3 rounded-xl bg-coral/15 p-2 text-xs font-semibold">Movement was limited by today’s cap.</p>}</article>
+    const movement = delta === null || delta === 0 ? 'No movement' : `${Math.abs(delta)} toward ${delta > 0 ? axis.rightLabel : axis.leftLabel}`
+    return <article className="card" key={axis.id}><div className="flex items-start justify-between gap-4"><div><p className="eyebrow">{axis.label}</p><p className="mt-1 font-display text-4xl font-bold">{scores[axis.id]}</p></div>{delta !== null && <span className="rounded-full bg-ink/5 px-3 py-1 text-sm font-bold text-ink/65">{movement}</span>}</div><p className="mt-3 text-sm leading-relaxed text-ink/65">{rationales[axis.id]}</p></article>
   })}</div>
 }

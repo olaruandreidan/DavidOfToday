@@ -46,7 +46,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     }
   }, [state.revision])
 
-  const clear = useCallback(() => { clearAllData(); setState(createInitialState()); setNotice('All game data and both browser key copies were removed.') }, [])
+  const clear = useCallback(() => { clearAllData(); setState(createInitialState()); setNotice('All game data and every stored provider-key copy were removed.') }, [])
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -64,4 +64,3 @@ export function useGameState() {
   if (!value) throw new Error('useGameState must be used inside GameStateProvider.')
   return value
 }
-

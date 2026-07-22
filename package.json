@@ -16,6 +16,7 @@
     "@anthropic-ai/sdk": "latest",
     "@vite-pwa/assets-generator": "latest",
     "lucide-react": "latest",
+    "openai": "^6.48.0",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",

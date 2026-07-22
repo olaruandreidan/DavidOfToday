@@ -1,22 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { AXES } from '../config/gameConfig'
-import { JudgmentSchema } from '../domain/schemas'
 import { JudgeError, type JudgeClient, type JudgeErrorKind, type JudgeResult, type JudgmentRequest } from './judgeClient'
-
-function toolSchema() {
-  return {
-    type: 'object' as const,
-    properties: Object.fromEntries(AXES.map((axis) => [axis.id, {
-      type: 'object',
-      description: axis.description,
-      properties: { score: { type: 'number', minimum: 0, maximum: 100 }, rationale: { type: 'string', minLength: 1 } },
-      required: ['score', 'rationale'],
-      additionalProperties: false
-    }])),
-    required: AXES.map((axis) => axis.id),
-    additionalProperties: false
-  }
-}
+import { judgmentFromToolOutput, toolDescriptionFor, toolNameFor, toolSchemaFor } from './judgeProtocol'
 
 function classify(error: unknown): JudgeError {
   if (error instanceof JudgeError) return error
@@ -39,25 +23,23 @@ export class AnthropicJudgeClient implements JudgeClient {
 
   async judge(request: JudgmentRequest): Promise<JudgeResult> {
     try {
+      const toolName = toolNameFor(request)
       const response = await this.client.messages.create({
         model: request.modelId,
-        max_tokens: 1_500,
+        max_tokens: request.mode === 'baseline' ? 2_500 : 1_500,
         messages: [{ role: 'user', content: request.prompt }],
-        tools: [{ name: 'record_scores', description: 'Record one score and rationale for every configured axis.', input_schema: toolSchema() }],
-        tool_choice: { type: 'tool', name: 'record_scores', disable_parallel_tool_use: true }
+        tools: [{ name: toolName, description: toolDescriptionFor(request), input_schema: toolSchemaFor(request) }],
+        tool_choice: { type: 'tool', name: toolName, disable_parallel_tool_use: true }
       })
-      const toolBlocks = response.content.filter((block) => block.type === 'tool_use' && 'name' in block && block.name === 'record_scores')
-      if (toolBlocks.length !== 1) throw new JudgeError('malformed-response', 'Expected exactly one record_scores call.')
+      const toolBlocks = response.content.filter((block) => block.type === 'tool_use' && 'name' in block && block.name === toolName)
+      if (toolBlocks.length !== 1) throw new JudgeError('malformed-response', `Expected exactly one ${toolName} call.`)
       const block = toolBlocks[0]
       if (!('input' in block)) throw new JudgeError('malformed-response', 'The tool call had no input.')
-      const raw = block.input
-      const flattened = {
-        scores: Object.fromEntries(AXES.map((axis) => [axis.id, (raw as Record<string, { score?: unknown }>)[axis.id]?.score])),
-        rationales: Object.fromEntries(AXES.map((axis) => [axis.id, (raw as Record<string, { rationale?: unknown }>)[axis.id]?.rationale]))
+      return {
+        judgment: judgmentFromToolOutput(request, block.input),
+        tokenUsage: { input: response.usage.input_tokens, output: response.usage.output_tokens },
+        rawToolOutput: block.input
       }
-      const parsed = JudgmentSchema.safeParse(flattened)
-      if (!parsed.success) throw new JudgeError('malformed-response', parsed.error.message)
-      return { judgment: parsed.data, tokenUsage: { input: response.usage.input_tokens, output: response.usage.output_tokens }, rawToolOutput: raw }
     } catch (error) { throw classify(error) }
   }
 

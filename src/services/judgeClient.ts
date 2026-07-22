@@ -1,9 +1,9 @@
-import type { Judgment } from '../domain/schemas'
+import type { Judgment, Scores } from '../domain/schemas'
+import { PROVIDERS, type ProviderId } from '../config/providers'
 
-export interface JudgmentRequest {
-  modelId: string
-  prompt: string
-}
+export type JudgmentRequest =
+  | { mode: 'baseline'; modelId: string; prompt: string }
+  | { mode: 'daily'; modelId: string; prompt: string; currentScores: Scores }
 
 export interface JudgeResult {
   judgment: Judgment
@@ -23,13 +23,16 @@ export class JudgeError extends Error {
   constructor(public readonly kind: JudgeErrorKind, message: string) { super(message); this.name = 'JudgeError' }
 }
 
-export const ERROR_MESSAGES: Record<JudgeErrorKind, string> = {
-  authentication: 'Claude rejected this API key. Check it and try again.',
-  'rate-limit': 'Claude is rate-limited right now. Your answers are saved; try again shortly.',
-  network: 'Claude could not be reached. Your answers are saved; check the connection and try again.',
-  timeout: 'Claude took too long to respond. Your answers are saved; try again.',
-  'unavailable-model': 'The selected Claude model is unavailable to this key. Choose another model in Settings.',
-  'malformed-response': 'Claude returned an invalid score record. Nothing changed; your answers are saved.',
-  unknown: 'Claude could not complete this check-in. Nothing changed and your answers are saved.'
+export function errorMessage(kind: JudgeErrorKind, provider: ProviderId): string {
+  const judge = PROVIDERS[provider].judgeLabel
+  const messages: Record<JudgeErrorKind, string> = {
+    authentication: `${judge} rejected this API key. Check it and try again.`,
+    'rate-limit': `${judge} is rate-limited right now. Your answers are saved; try again shortly.`,
+    network: `${judge} could not be reached. Your answers are saved; check the connection and try again.`,
+    timeout: `${judge} took too long to respond. Your answers are saved; try again.`,
+    'unavailable-model': `The selected ${judge} model is unavailable to this key. Choose another model in Settings.`,
+    'malformed-response': `${judge} returned an invalid judgment record. Nothing changed; your answers are saved.`,
+    unknown: `${judge} could not complete this check-in. Nothing changed and your answers are saved.`
+  }
+  return messages[kind]
 }
-

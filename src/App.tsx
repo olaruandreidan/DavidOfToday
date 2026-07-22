@@ -12,7 +12,8 @@ import { SettingsScreen } from './screens/SettingsScreen'
 import { SetupScreen } from './screens/SetupScreen'
 
 function RequireKey() {
-  return getApiKey() ? <Layout /> : <Navigate to="/setup" replace />
+  const { state } = useGameState()
+  return getApiKey(state.settings.provider) ? <Layout /> : <Navigate to="/setup" replace />
 }
 
 function RequireBaseline({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,7 @@ function RequireBaseline({ children }: { children: React.ReactNode }) {
 
 function Home() {
   const { state } = useGameState()
-  if (!getApiKey()) return <Navigate to="/setup" replace />
+  if (!getApiKey(state.settings.provider)) return <Navigate to="/setup" replace />
   return <Navigate to={state.baseline ? '/dashboard' : '/onboarding'} replace />
 }
 

@@ -1,4 +1,5 @@
 import { AXES } from '../config/gameConfig'
+import type { ProviderId } from '../config/providers'
 import type { JudgeResult } from '../services/judgeClient'
 import type { GameState, Scores, Session } from './schemas'
 
@@ -11,7 +12,7 @@ export function localDate(date: Date, timeZone?: string): string {
 const clamp = (value: number, minimum: number, maximum: number) => Math.min(maximum, Math.max(minimum, value))
 const id = () => globalThis.crypto?.randomUUID?.() ?? `session-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-interface ApplyOptions { result: JudgeResult; modelId: string; promptVersion: string; questionIds: string[]; answers: Record<string, string>; now?: Date; timeZone?: string }
+interface ApplyOptions { result: JudgeResult; provider: ProviderId; modelId: string; promptVersion: string; questionIds: string[]; answers: Record<string, string>; now?: Date; timeZone?: string }
 
 export function applyBaseline(state: GameState, options: ApplyOptions): GameState {
   const now = options.now ?? new Date()
@@ -20,7 +21,7 @@ export function applyBaseline(state: GameState, options: ApplyOptions): GameStat
   const scores = options.result.judgment.scores
   const session: Session = {
     id: id(), type: 'baseline', completedAt: timestamp, localDate: date, promptVersion: options.promptVersion,
-    modelId: options.modelId, tokenUsage: options.result.tokenUsage, questionIds: options.questionIds,
+    provider: options.provider, modelId: options.modelId, tokenUsage: options.result.tokenUsage, questionIds: options.questionIds,
     answers: options.answers, rawToolOutput: options.result.rawToolOutput, proposedScores: scores, appliedScores: scores,
     deltas: Object.fromEntries(AXES.map((axis) => [axis.id, null])), rationales: options.result.judgment.rationales,
     limitedAxes: Object.fromEntries(AXES.map((axis) => [axis.id, false]))
@@ -38,30 +39,34 @@ export function applyDaily(state: GameState, options: ApplyOptions): GameState {
   const now = options.now ?? new Date()
   const timestamp = now.toISOString()
   const date = localDate(now, options.timeZone)
-  const snapshot = state.dailyCaps[date] ?? { cap: state.settings.dailyCap, startScores: state.currentScores }
+  if (hasDailySessionForDate(state, date)) throw new Error('A daily check-in is already recorded for this local date.')
   const applied = {} as Scores
   const deltas: Record<string, number | null> = {}
   const limited: Record<string, boolean> = {}
   for (const axis of AXES) {
     const proposal = options.result.judgment.scores[axis.id]
-    const minimum = Math.max(0, snapshot.startScores[axis.id] - snapshot.cap)
-    const maximum = Math.min(100, snapshot.startScores[axis.id] + snapshot.cap)
-    applied[axis.id] = clamp(proposal, minimum, maximum)
+    const movement = proposal - state.currentScores[axis.id]
+    if (!Number.isInteger(movement) || Math.abs(movement) > 2) throw new Error(`${axis.id} daily movement must be an integer from -2 to 2.`)
+    applied[axis.id] = clamp(proposal, 0, 100)
     deltas[axis.id] = applied[axis.id] - state.currentScores[axis.id]
-    limited[axis.id] = applied[axis.id] !== proposal
+    limited[axis.id] = false
   }
   const session: Session = {
     id: id(), type: 'daily', completedAt: timestamp, localDate: date, promptVersion: options.promptVersion,
-    modelId: options.modelId, tokenUsage: options.result.tokenUsage, questionIds: options.questionIds,
+    provider: options.provider, modelId: options.modelId, tokenUsage: options.result.tokenUsage, questionIds: options.questionIds,
     answers: options.answers, rawToolOutput: options.result.rawToolOutput, proposedScores: options.result.judgment.scores,
     appliedScores: applied, deltas, rationales: options.result.judgment.rationales, limitedAxes: limited
   }
   return {
-    ...state, currentScores: applied, dailyCaps: { ...state.dailyCaps, [date]: snapshot }, sessions: [...state.sessions, session],
+    ...state, currentScores: applied, sessions: [...state.sessions, session],
     history: [...state.history, { timestamp, localDate: date, scores: applied }],
     questionCycle: state.drafts.daily.nextCycle ?? state.questionCycle,
     drafts: { ...state.drafts, daily: { answers: {}, questionIds: [], nextCycle: null, startedAt: null } }
   }
+}
+
+export function hasDailySessionForDate(state: GameState, date: string): boolean {
+  return state.sessions.some((session) => session.type === 'daily' && session.localDate === date)
 }
 
 export function dailyTrend(state: GameState) {

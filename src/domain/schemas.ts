@@ -1,7 +1,8 @@
 import { z } from 'zod'
-import { AXES, DEFAULT_BASELINE_MODEL, DEFAULT_DAILY_CAP, DEFAULT_DAILY_MODEL } from '../config/gameConfig'
+import { AXES, DEFAULT_DAILY_CAP } from '../config/gameConfig'
+import { createDefaultProviderSettings, PROVIDER_IDS } from '../config/providers'
 
-export const SCHEMA_VERSION = 1 as const
+export const SCHEMA_VERSION = 2 as const
 export const axisIds = AXES.map((axis) => axis.id)
 const scoreShape = Object.fromEntries(axisIds.map((id) => [id, z.number().min(0).max(100)]))
 const rationaleShape = Object.fromEntries(axisIds.map((id) => [id, z.string().min(1)]))
@@ -13,6 +14,7 @@ export const RationalesSchema = z.object(rationaleShape).strict()
 export const DeltasSchema = z.object(deltaShape).strict()
 export const LimitedAxesSchema = z.object(limitedShape).strict()
 export const JudgmentSchema = z.object({ scores: ScoresSchema, rationales: RationalesSchema }).strict()
+export const ProviderIdSchema = z.enum(PROVIDER_IDS)
 
 export const SessionSchema = z.object({
   id: z.string().min(1),
@@ -20,6 +22,7 @@ export const SessionSchema = z.object({
   completedAt: z.string().datetime(),
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   promptVersion: z.string().min(1),
+  provider: ProviderIdSchema,
   modelId: z.string().min(1),
   tokenUsage: z.object({ input: z.number().int().nonnegative(), output: z.number().int().nonnegative() }).strict(),
   questionIds: z.array(z.string()),
@@ -32,11 +35,19 @@ export const SessionSchema = z.object({
   limitedAxes: LimitedAxesSchema
 }).strict()
 
-export const SettingsSchema = z.object({
+export const ProviderConnectionSettingsSchema = z.object({
   baselineModel: z.string().min(1),
   dailyModel: z.string().min(1),
-  dailyCap: z.number().int().positive(),
   keyPersistence: z.enum(['local', 'session'])
+}).strict()
+
+export const SettingsSchema = z.object({
+  provider: ProviderIdSchema,
+  providers: z.object({
+    anthropic: ProviderConnectionSettingsSchema,
+    openai: ProviderConnectionSettingsSchema
+  }).strict(),
+  dailyCap: z.number().int().positive()
 }).strict()
 
 export const GameStateSchema = z.object({
@@ -80,8 +91,7 @@ export function createInitialState(): GameState {
       onboarding: { answers: {}, index: 0 },
       daily: { answers: {}, questionIds: [], nextCycle: null, startedAt: null }
     },
-    settings: { baselineModel: DEFAULT_BASELINE_MODEL, dailyModel: DEFAULT_DAILY_MODEL, dailyCap: DEFAULT_DAILY_CAP, keyPersistence: 'local' },
+    settings: { provider: 'anthropic', providers: createDefaultProviderSettings(), dailyCap: DEFAULT_DAILY_CAP },
     dailyCaps: {}
   }
 }
-
