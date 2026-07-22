@@ -34,7 +34,7 @@ export const PROVIDERS: Record<ProviderId, {
     keyLabel: 'OpenAI API key',
     keyPlaceholder: 'sk-…',
     defaults: {
-      baselineModel: 'gpt-5.6-sol',
+      baselineModel: 'gpt-5.6-terra',
       dailyModel: 'gpt-5.6-luna',
       keyPersistence: 'local'
     }

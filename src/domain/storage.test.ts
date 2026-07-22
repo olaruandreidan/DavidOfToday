@@ -58,7 +58,7 @@ describe('storage and backups', () => {
     expect(loaded.recovered).toBe(false)
     expect(loaded.state).toMatchObject({
       schemaVersion: 2,
-      settings: { provider: 'anthropic', providers: { anthropic: { baselineModel: 'legacy-baseline', dailyModel: 'legacy-daily', keyPersistence: 'session' }, openai: { baselineModel: 'gpt-5.6-sol', dailyModel: 'gpt-5.6-luna' } } },
+      settings: { provider: 'anthropic', providers: { anthropic: { baselineModel: 'legacy-baseline', dailyModel: 'legacy-daily', keyPersistence: 'session' }, openai: { baselineModel: 'gpt-5.6-terra', dailyModel: 'gpt-5.6-luna' } } },
       sessions: [{ provider: 'anthropic', modelId: 'legacy-model' }]
     })
     const backup = parseBackup(JSON.stringify({ kind: 'david-of-today-backup', schemaVersion: 1, exportedAt: new Date().toISOString(), state: legacy }))
