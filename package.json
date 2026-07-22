@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:quick": "vite --mode quick",
     "build": "vitest run src/config/config.test.ts && tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
