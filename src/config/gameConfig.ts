@@ -5,6 +5,9 @@ export const AXES = [
     label: 'Justice ↔ Humility',
     leftLabel: 'Justice',
     rightLabel: 'Humility',
+    tensionDescription: 'How firmly should you assert what is fair, and how much should awareness of your limits restrain your judgment?',
+    leftDescription: 'Justice seeks fair treatment, equal standing, protected rights, accountability, and repair. It is willing to name wrongdoing and uphold principles even when doing so is personally costly.',
+    rightDescription: 'Humility recognizes fallibility, incomplete knowledge, limited moral standing, and one’s own implication. It makes room for mercy, restraint, listening, and the possibility that one’s judgment is wrong.',
     description: 'Justice favors impartial principles, rights, fair treatment, and accountability. Humility favors restraint grounded in fallibility, limited standing, mercy, and awareness of one’s own implication.'
   },
   {
@@ -12,6 +15,9 @@ export const AXES = [
     label: 'Wisdom ↔ Pride',
     leftLabel: 'Wisdom',
     rightLabel: 'Pride',
+    tensionDescription: 'When should you revise or defer in light of context, and when should you stand behind your own judgment, dignity, and identity?',
+    leftDescription: 'Wisdom integrates evidence, experience, context, and consequences into practical judgment. It stays revisable, knows when to defer, and accepts that the best choice may be imperfect or painful.',
+    rightDescription: 'Pride here means self-respect rather than vanity: trusting your judgment, defending your dignity, maintaining boundaries, and remaining faithful to commitments and a life you can call your own.',
     description: 'Wisdom favors context-sensitive prudence, synthesis, revisability, and regard for consequences. Pride favors an unapologetic sense of self, personal dignity, firm boundaries, conviction, and self-authorship.'
   },
   {
@@ -19,6 +25,9 @@ export const AXES = [
     label: 'Ambition ↔ Comfort',
     leftLabel: 'Ambition',
     rightLabel: 'Comfort',
+    tensionDescription: 'How much of a good life should be risked or sacrificed for growth, achievement, and larger possibilities?',
+    leftDescription: 'Ambition reaches beyond the present toward growth, achievement, mastery, and meaningful impact. It accepts effort, uncertainty, and sacrifice when a larger possibility seems worth pursuing.',
+    rightDescription: 'Comfort values enoughness, stability, rest, safety, belonging, and the life already in hand. It protects people and relationships from being endlessly subordinated to the next achievement.',
     description: 'Ambition favors growth, achievement, demanding possibility, and accepting sacrifice for a larger aim. Comfort favors stability, sufficiency, rest, belonging, and protecting a good life already present.'
   },
   {
@@ -26,6 +35,9 @@ export const AXES = [
     label: 'Curiosity ↔ Confidence',
     leftLabel: 'Curiosity',
     rightLabel: 'Confidence',
+    tensionDescription: 'When is further questioning worth uncertainty and delay, and when is understanding sufficient for committed action?',
+    leftDescription: 'Curiosity values discovery, questioning, alternative perspectives, and contact with the unknown. It keeps beliefs open to examination and treats understanding as worthwhile beyond its immediate usefulness.',
+    rightDescription: 'Confidence trusts sufficiently tested beliefs and one’s capacity to decide. It accepts that certainty is rarely complete and closes inquiry when continued doubt would prevent commitment or action.',
     description: 'Curiosity favors the intrinsic joy and value of discovering, understanding, and exploring the unknown. Confidence favors trusting settled judgment and one’s ability enough to commit, decide, and act.'
   }
 ] as const

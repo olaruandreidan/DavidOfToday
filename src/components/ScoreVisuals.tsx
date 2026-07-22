@@ -19,6 +19,18 @@ export function AxisScales({ baseline, current }: { baseline?: Scores | null; cu
         <p className="mt-1 text-center text-[11px] font-semibold text-ink/40">50 · mixed or context-dependent</p>
       </section>
     })}</div>
+    <section className="mt-8 border-t border-ink/10 pt-6" aria-labelledby="axis-guide-title">
+      <h3 id="axis-guide-title" className="font-display text-xl font-bold">What the values mean</h3>
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/60">Each axis is a productive tension, not a scale from bad to good. A position shows which value your answers emphasized in difficult trade-offs; healthy judgment can draw on both ends and change with context.</p>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">{AXES.map((axis) => <article className="rounded-2xl bg-ink/[0.035] p-4" key={axis.id}>
+        <h4 className="font-display text-lg font-bold">{axis.label}</h4>
+        <p className="mt-1 text-sm leading-relaxed text-ink/60">{axis.tensionDescription}</p>
+        <dl className="mt-4 space-y-3 text-sm leading-relaxed">
+          <div><dt className="font-bold text-sky">{axis.leftLabel} · 0</dt><dd className="mt-1 text-ink/70">{axis.leftDescription}</dd></div>
+          <div><dt className="font-bold text-coral">{axis.rightLabel} · 100</dt><dd className="mt-1 text-ink/70">{axis.rightDescription}</dd></div>
+        </dl>
+      </article>)}</div>
+    </section>
   </div>
 }
 
